@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Báo cáo ngày · SƠN APEC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+ *{box-sizing:border-box} html,body{overflow-x:hidden}
+ body{margin:0;background:#eef1f4;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1b1f24;padding-bottom:110px}
+ .dk{position:sticky;top:0;z-index:5;background:#fff;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+ .dk h1{margin:0 0 8px;font-size:18px}
+ .hang{display:flex;gap:8px;align-items:center}
+ .hang input{flex:1;font-size:16px;padding:9px;border:1px solid #c9ced6;border-radius:8px}
+ .hang button{font-size:15px;padding:10px 12px;border:1px solid #c9ced6;background:#fff;border-radius:8px}
+ #gui{display:block;width:100%;margin-top:10px;font-size:19px;font-weight:800;padding:15px;border:0;border-radius:12px;background:#0068ff;color:#fff}
+ #gui:disabled{background:#9aa3ad}
+ #tb{margin:10px 14px;font-size:15px;line-height:1.45}
+ .loi{color:#b3261e;font-weight:700}
+ .xem img{display:block;width:100%;max-width:420px;margin:10px auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+ /* ---- khuôn ảnh (dựng ngoài màn hình rồi chụp) ---- */
+ #khuon{position:absolute;left:-10000px;top:0}
+ .anh{width:400px;background:#eef1f4;padding-bottom:6px}
+ .top{background:#0b4f8a;color:#fff;padding:12px 14px}.top h2{margin:0;font-size:19px}.top div{font-size:14px;opacity:.92;margin-top:3px}
+ .the{background:#fff;margin:10px;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+ .dau{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#e8f0f8;padding:9px 12px;font-size:17px}
+ .dau b{min-width:0}
+ .dau span{font-size:15px;color:#0b4f8a;font-weight:700;white-space:nowrap}
+ .dc{padding:6px 12px 2px;font-size:14px;color:#444}
+ .cho{margin:6px 12px 0;font-size:12.5px;color:#a66a00;font-weight:700}
+ table{width:100%;border-collapse:collapse;font-size:15.5px}
+ th{width:96px;text-align:left;vertical-align:top;color:#5d6b7c;font-weight:600;font-size:13px;padding:6px 6px 6px 12px;border-top:1px solid #eef1f4}
+ td{padding:6px 12px 6px 4px;border-top:1px solid #eef1f4;font-weight:600;line-height:1.35;word-break:break-word}
+ td.tr,.trd,.dau span.trd{color:#c62828;background:#fdecea;font-weight:800;letter-spacing:.5px}
+ .chan{text-align:center;font-size:12px;color:#888;padding:4px 0 6px}
+</style></head><body>
+<div class="dk">
+ <h1>📄 Báo cáo ngày · <span id="tenNV">…</span></h1>
+ <div class="hang"><button id="truoc">‹</button><input id="ngay" type="date"><button id="sau">›</button><button id="lai">↻</button></div>
+ <button id="gui" disabled>📤 GỬI ZALO</button>
+</div>
+<div id="tb">Đang tải báo cáo…</div>
+<div class="xem" id="xem"></div>
+<div id="khuon"></div>
+<script>
+ var EXEC = "https://script.google.com/macros/s/AKfycbwH3UBnwvUwhG5gwMNSIsTF2phryhkpCi5gJyOnnL2wjo9coi3rwoiWYNae1yWZNJw6/exec", CTY = "SƠN APEC", MOI_ANH = 2, TEP = [], DANG = 0;
+ function $(i) { return document.getElementById(i); }
+ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+ function luu(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; localStorage.setItem(k, v); } catch (e) { return ''; } }
+ // link riêng ?t=… -> nhớ trong máy (mở bằng biểu tượng màn hình chính vẫn chạy)
+ var T = (location.search.match(/[?&]t=([0-9a-f]{32})/) || [])[1] || '';
+ if (T) luu('tBC', T); else T = luu('tBC');
+ function homNay() { var d = new Date(Date.now() + 7 * 3600000); return d.toISOString().slice(0, 10); }
+ function dd(s) { var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+ function doiNgay(n) { var d = new Date($('ngay').value + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); $('ngay').value = d.toISOString().slice(0, 10); tai(); }
+ $('ngay').value = homNay();
+ $('truoc').onclick = function () { doiNgay(-1); }; $('sau').onclick = function () { doiNgay(1); };
+ $('lai').onclick = tai; $('ngay').onchange = tai;
+
+ /** 1 thẻ khách. Ô trống tô đỏ; gặp công trình thì không bắt các ô của đại lý (và ngược lại). */
+ function the(o, i) {
+   var laCT = !o['TÊN ĐẠI LÝ'] && !!o['TÊN CÔNG TRÌNH'];
+   var muc = (laCT ? [['TIẾN ĐỘ CÔNG TRÌNH', 'Tiến độ CT'], ['ĐÁNH GIÁ CÔNG TRÌNH', 'Đánh giá CT']]
+                   : [['NGÀNH NGHỀ ĐẠI LÝ', 'Ngành nghề'], ['ĐÁNH GIÁ ĐẠI LÝ', 'Đánh giá']])
+     .concat([['VẤN ĐỀ', 'Vấn đề'], ['MỤC ĐÍCH GHÉ THĂM', 'Mục đích ghé'], ['TÍN HIỆU MUA', 'Tín hiệu mua'],
+              ['BĂN KHOĂN CỦA KH', 'Băn khoăn KH'], ['VIỆC LẦN SAU', 'Việc lần sau'], ['NGÀY HẸN LẠI', 'Hẹn lại']]);
+   var trong = 0;
+   var dong = muc.map(function (m) { var v = o[m[0]]; if (!v) trong++; return '<tr><th>' + m[1] + '</th><td class="' + (v ? '' : 'tr') + '">' + (v ? esc(v) : 'TRỐNG') + '</td></tr>'; }).join('');
+   var dc = [o['THÔN'], o['XÃ'], o['HUYỆN']].filter(Boolean).join(' – ');
+   if (!dc) trong++;
+   if (!o['SỐ ĐIỆN THOẠI'] && !laCT) trong++;
+   var html = '<div class="the"><div class="dau"><b>' + i + '. ' + esc(o['TÊN ĐẠI LÝ'] || o['TÊN CÔNG TRÌNH'] || '(chưa ghi tên)') + '</b>' +
+     '<span' + (o['SỐ ĐIỆN THOẠI'] || laCT ? '' : ' class="trd"') + '>' + esc(o['SỐ ĐIỆN THOẠI'] || (laCT ? '' : 'TRỐNG SĐT')) + '</span></div>' +
+     '<div class="dc">📍 ' + (dc ? esc(dc) : '<span class="trd">TRỐNG ĐỊA CHỈ</span>') + '</div>' +
+     (o.nguon === 'APP' ? (o.tt === 'LỖI' ? '<div class="cho" style="color:#c62828">⚠ App báo LỖI khi chuyển vào NHẬT KÝ – nhắn quản lý</div>' : '<div class="cho">⏳ Vừa lưu trên app, đang chờ vào NHẬT KÝ</div>') : '') +
+     '<table>' + dong + '</table></div>';
+   return { html: html, trong: trong };
+ }
+
+ function tai() {
+   var ngay = $('ngay').value || homNay(), lan = ++DANG;
+   TEP = []; $('gui').disabled = true; $('gui').textContent = '📤 GỬI ZALO'; $('xem').innerHTML = '';
+   if (!T) { $('tb').innerHTML = '<span class="loi">Chưa có link riêng. Mở đúng link quản lý gửi qua Zalo (có ?t=…) một lần.</span>'; return; }
+   $('tb').textContent = 'Đang tải báo cáo ngày ' + dd(ngay) + '…';
+   fetch(EXEC, { method: 'POST', body: JSON.stringify({ kenh: 'WEB', hanhDong: 'WEB_BAOCAO', t: T, ngay: ngay }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
+     .then(function (r) { return r.json(); })
+     .then(function (d) { if (lan === DANG) ve(d, ngay); }, function () { if (lan === DANG) $('tb').innerHTML = '<span class="loi">Mạng yếu, chưa tải được. Bấm ↻ để thử lại.</span>'; });
+ }
+
+ function ve(d, ngay) {
+   if (!d || !d.ok) { $('tb').innerHTML = '<span class="loi">' + esc((d && d.loi) || 'Lỗi tạm thời, bấm ↻ thử lại.') + '</span>'; return; }
+   $('tenNV').textContent = d.ten;
+   var ds = d.ds || [];
+   if (!ds.length) { $('tb').innerHTML = 'Ngày <b>' + dd(ngay) + '</b> chưa có báo cáo nào. Làm báo cáo trên app xong rồi bấm ↻.'; return; }
+   var the_ = ds.map(function (o, i) { return the(o, i + 1); });
+   var trong = the_.reduce(function (s, x) { return s + x.trong; }, 0), soAnh = Math.ceil(ds.length / MOI_ANH);
+   var khuon = '';
+   for (var p = 0; p < soAnh; p++) {
+     khuon += '<div class="anh" id="anh' + p + '"><div class="top"><h2>BÁO CÁO NGÀY ' + dd(ngay) + ' · ' + esc(d.ten).toUpperCase() + '</h2>' +
+       '<div>' + CTY + ' · ' + ds.length + ' lượt ghé · ' + trong + ' ô bỏ trống · Ảnh ' + (p + 1) + '/' + soAnh + '</div></div>' +
+       the_.slice(p * MOI_ANH, (p + 1) * MOI_ANH).map(function (x) { return x.html; }).join('') +
+       '<div class="chan">Xuất từ app báo cáo lúc ' + new Date().toLocaleString('vi-VN') + '</div></div>';
+   }
+   $('khuon').innerHTML = khuon;
+   $('tb').innerHTML = '<b>' + ds.length + ' khách</b> · ' + soAnh + ' ảnh' + (trong ? ' · <span class="loi">' + trong + ' ô bỏ trống</span>' : ' · đủ hết các ô') + '. Đang dựng ảnh…';
+   dungAnh(0, soAnh, ngay, DANG);
+ }
+
+ /** Dựng lần lượt từng ảnh PNG (để sẵn, bấm GỬI là chia sẻ ngay cả bộ). */
+ function dungAnh(p, soAnh, ngay, lan) {
+   if (lan !== DANG) return;
+   if (p >= soAnh) {
+     $('gui').disabled = false; $('gui').textContent = '📤 GỬI ZALO (' + soAnh + ' ảnh)';
+     $('tb').innerHTML = $('tb').innerHTML.replace('Đang dựng ảnh…', 'Ảnh đã sẵn sàng. Bấm <b>GỬI ZALO</b> → chọn <b>Zalo</b> → chọn nhóm → Gửi.');
+     return;
+   }
+   html2canvas($('anh' + p), { scale: 2, backgroundColor: '#eef1f4', logging: false }).then(function (cv) {
+     cv.toBlob(function (b) {
+       if (lan !== DANG) return;
+       TEP.push(new File([b], 'bao-cao-' + ngay + '-' + (p + 1) + '.png', { type: 'image/png' }));
+       var im = new Image(); im.src = URL.createObjectURL(b); im.alt = 'Ảnh ' + (p + 1); $('xem').appendChild(im);
+       dungAnh(p + 1, soAnh, ngay, lan);
+     }, 'image/png');
+   }, function () { $('tb').innerHTML = '<span class="loi">Không dựng được ảnh. Bấm ↻ thử lại.</span>'; });
+ }
+
+ $('gui').onclick = function () {
+   if (!TEP.length) return;
+   if (navigator.canShare && navigator.canShare({ files: TEP })) {
+     navigator.share({ files: TEP, title: 'Báo cáo ngày' }).catch(function () {});
+   } else {
+     $('tb').innerHTML = '<span class="loi">Máy này không gửi được nhiều ảnh một lần.</span> Bấm giữ từng ảnh bên dưới → <b>Lưu ảnh</b>, rồi gửi vào nhóm Zalo.';
+   }
+ };
+ tai();
+</script>
+</body></html>

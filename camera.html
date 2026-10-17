@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="robots" content="noindex,nofollow"><title>Check-in thị trường</title>
+<style>
+ body{font-family:-apple-system,system-ui,sans-serif;margin:0;padding:16px;background:#f4f5f7;color:#1b1f24}
+ .the{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+ h1{font-size:20px;margin:0 0 8px}
+ label{display:block;font-weight:600;margin:12px 0 4px}
+ input,select{width:100%;box-sizing:border-box;font-size:17px;padding:10px;border:1px solid #c9ced6;border-radius:8px;background:#fff}
+ button{width:100%;font-size:18px;padding:14px;border:0;border-radius:10px;background:#1f5f3a;color:#fff;margin-top:14px}
+ button:disabled{background:#9aa3ad}
+ button.phu{background:#fff;color:#5b6570;border:1px solid #c9ced6;font-size:15px;padding:10px}
+ .nho{font-size:14px;color:#5b6570}
+ .loi{color:#b3261e;font-weight:600}
+ .ok{color:#1f5f3a;font-weight:600}
+ img{max-width:100%;border-radius:8px;margin-top:10px}
+ #anh{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden}
+ body{padding-bottom:110px}
+ #khungCam video{width:100%;border-radius:10px;background:#000;display:block;margin-top:8px}
+ .nutChup{display:block;text-align:center;font-size:18px;font-weight:700;padding:16px 10px;border:2px dashed #1f5f3a;border-radius:10px;background:#eef6f0;color:#1f5f3a;margin:4px 0 0}
+</style></head>
+<body>
+<div id="chan" class="the loi" style="display:none"></div>
+<div id="app">
+ <div class="the" id="kGhep" style="display:none">
+  <h1>APEC · Ghép máy này</h1>
+  <div class="nho">Chỉ làm một lần, khi đang đứng cạnh quản lý. Quản lý đọc mã ghép máy (8 ký tự) cho anh/chị nhập.</div>
+  <label for="gEmail">Gmail của anh/chị</label><input id="gEmail" type="email" autocomplete="email" autocapitalize="off">
+  <label for="gMa">Mã ghép máy</label><input id="gMa" autocapitalize="characters" autocomplete="off" maxlength="8">
+  <button id="nutGhep">Ghép máy</button>
+ </div>
+ <div class="the" id="kCheckin" style="display:none">
+  <h1>APEC · Check-in tại chỗ</h1>
+  <div class="nho">Chụp ảnh mới bằng camera tại nơi gặp khách (mặt tiền, biển hiệu — không chụp mặt người). Ảnh tự đóng dấu giờ và vị trí. Báo cáo chi tiết nhập trong 48 giờ.</div>
+  <label for="loai">Loại</label>
+  <select id="loai"><option>GẶP ĐẠI LÝ</option><option>CÔNG TRÌNH</option><option>VIỆC NỘI BỘ</option></select>
+  <div id="kSdt"><label for="sdt">SĐT khách (không bắt buộc — nhập ở báo cáo)</label><input id="sdt" type="tel" inputmode="numeric"></div>
+  <div id="kTen"><label for="ten">Tên khách / công trình</label><input id="ten"></div>
+  <div id="kViec" style="display:none"><label for="viec">Việc nội bộ</label><select id="viec"></select></div>
+  <div id="kViTri"><label for="viTri">Gặp ở đâu?</label>
+   <select id="viTri"><option value="">— Chọn nơi gặp —</option><option value="TẠI NHÀ">TẠI NHÀ / CỬA HÀNG KHÁCH</option><option value="KHÁC">VỊ TRÍ KHÁC</option></select>
+  </div>
+  <div id="kViTriKhac" style="display:none"><label for="viTriGhiChu">Vị trí khác là</label>
+   <select id="viTriGhiChu"><option>QUÁN CAFE</option><option>CÔNG TRÌNH</option><option>KHÁC</option></select>
+  </div>
+  <label for="anh">1. Chụp ảnh tại chỗ</label>
+  <input id="anh" type="hidden">
+  <button type="button" class="nutChup" id="nutChup">📷 BẤM VÀO ĐÂY ĐỂ MỞ CAMERA</button>
+  <div id="khungCam" style="display:none"><video id="cam" playsinline autoplay muted></video>
+   <button type="button" id="nutBam" style="background:#c62828;font-weight:700">⬤ CHỤP</button>
+   <button type="button" class="phu" id="nutHuyCam">Đóng camera</button></div>
+  <img id="xem" style="display:none" alt="Ảnh vừa chụp">
+  <button id="nutGui" disabled>2. Gửi check-in</button>
+  <button class="phu" id="nutGhepLai">Ghép lại máy này</button>
+ </div>
+ <div class="the" id="kLink" style="display:none">
+  <h1>Đã ghép xong</h1>
+  <div class="nho">Từ nay chỉ cần bấm <b>CHECK-IN</b> trong app báo cáo, <b>không phải ghép máy lại</b>. (Không bắt buộc: muốn mở nhanh ngoài app thì bấm nút dưới rồi Chia sẻ → Thêm vào MH chính.) Không gửi link này cho ai.</div>
+  <a id="linkRieng" href="#" target="_top"><button type="button">Mở link riêng</button></a>
+ </div>
+ <div class="the" id="kq" style="display:none"></div>
+</div>
+<script>
+ var ua = navigator.userAgent || '';
+ var VIEC = ['NGHỈ', 'HỌP', 'LỌC DS', 'KHẢO SÁT', 'ĐÀO TẠO', 'CÔNG TÁC', 'KIỂM KHO',
+                   'BÀN GIAO', 'HỖ TRỢ NV KHÁC', 'VIỆC KHÁC'], KHOI = (function () { try { var m = location.search.match(/[?&]k=([A-Za-z0-9_-]{20,800})/); return m ? m[1] : ''; } catch (e) { return ''; } })(),
+     LINK = location.origin + location.pathname + '?v=1', EXEC = "https://script.google.com/macros/s/AKfycbwH3UBnwvUwhG5gwMNSIsTF2phryhkpCi5gJyOnnL2wjo9coi3rwoiWYNae1yWZNJw6/exec";
+ try { if (KHOI && history.replaceState) history.replaceState(null, '', location.pathname); } catch (eH) {}   // không để khoá máy nằm trên thanh địa chỉ
+ var LOI_TAM = 'Hệ thống lỗi tạm thời, thử lại sau 1 phút. Nếu vẫn lỗi, chụp màn hình gửi quản lý.';
+ function $(id) { return document.getElementById(id); }
+ function chan(msg) {
+   $('app').style.display = 'none';
+   var c = $('chan'); c.style.display = 'block'; c.textContent = msg;
+ }
+ function luu(k, v) { try { if (v === undefined) return localStorage.getItem(k) || ''; if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (e) { return null; } }
+ function bao(txt, loai) {
+   var k = $('kq'); k.style.display = 'block';
+   k.className = 'the ' + (loai || ''); k.textContent = txt;
+   if (loai === 'loi') { try { k.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (eS) {} }   // 16/10: báo lỗi luôn hiện giữa màn hình
+ }
+ var dlCho = null;   // 16/10: phiếu đã gửi nhưng chưa nhận được trả lời rõ ràng
+ /** Gửi phiếu đang chờ. Mạng chập chờn (lỗi không có mã) -> tự gửi lại CÙNG mã tối đa 4 lần; máy chủ trả đúng lượt đã lưu, không ghi trùng. */
+ function guiPhieu(nut, lan) {
+   goi('guiCheckinTuTrang', dlCho, function (r) {
+     if (!r.ok && !r.ma && lan < 4) { bao('Mạng yếu, đang gửi lại (lần ' + (lan + 1) + ')...'); setTimeout(function () { guiPhieu(nut, lan + 1); }, 3000 * lan); return; }
+     if (!r.ok) {
+       nut.disabled = false; if (r.ma) dlCho = null;
+       bao((r.loi || LOI_TAM) + (dlCho ? ' Bấm GỬI để gửi lại đúng ảnh này (KHÔNG chụp lại).' : ''), 'loi'); return;
+     }
+     var ten = dlCho ? dlCho.tenKhach : ''; dlCho = null;   // nút Gửi giữ khoá tới khi chụp ảnh mới
+     bao('✔ GỬI THÀNH CÔNG — đã lưu check-in' + (ten ? ': ' + ten : '') + '. Mã: ' + r.maCheckin + '. Hạn báo cáo: ' + r.hanBaoCao + '. KHÔNG cần gửi lại.', 'ok');
+     try { $('kq').scrollIntoView({ block: 'center' }); } catch (eS) {}
+     anhImg = null; gioExif = ''; vanTay = '';
+     $('xem').style.display = 'none'; $('anh').value = ''; $('nutChup').textContent = '📷 BẤM VÀO ĐÂY ĐỂ MỞ CAMERA'; $('viTri').value = ''; chonViTri();
+   });
+ }
+ /** Gọi máy chủ: POST kênh WEB tới /exec (Google trả kết quả qua link echo, fetch tự đi theo). */
+ function goi(ten, dl, xong) {
+   var hd = { ghepMay: 'WEB_GHEP', layMaNgauNhien: 'WEB_MA', guiCheckinTuTrang: 'WEB_CHECKIN' }[ten];
+   var b = JSON.parse(JSON.stringify(dl || {})); b.kenh = 'WEB'; b.hanhDong = hd;
+   fetch(EXEC, { method: 'POST', body: JSON.stringify(b), headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
+     .then(function (r) { return r.json(); })
+     .then(function (r) { xong(r || { ok: false, loi: LOI_TAM }); }, function () { xong({ ok: false, loi: LOI_TAM }); });
+ }
+ function maMay() {
+   var k = 'maMayCheckin', m = luu(k);
+   if (m === null) return '';
+   if (!m) {
+     var a = new Uint8Array(16); crypto.getRandomValues(a);
+     m = 'IP-' + Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+     luu(k, m);
+   }
+   return m;
+ }
+ function dauVet() {
+   var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+   return { sw: screen.width, sh: screen.height, dpr: window.devicePixelRatio || 0, tp: navigator.maxTouchPoints || 0, tz: tz, lg: navigator.language || '' };
+ }
+ function goc() {
+   return { email: luu('emailCheckin'), maMay: luu('maMayCheckin'), biMat: luu('biMatCheckin'), ua: ua, dauVet: dauVet() };
+ }
+ /** Dựng link riêng = link trang + khoá nhớ máy (email, mã máy, bí mật máy). */
+ function hienLinkRieng() {
+   try {
+     if (!LINK || typeof btoa === 'undefined') return;
+     var j = JSON.stringify({ e: luu('emailCheckin'), m: luu('maMayCheckin'), b: luu('biMatCheckin'), t: luu('tenCheckin') });
+     var k = btoa(unescape(encodeURIComponent(j))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+     $('linkRieng').href = LINK + '&k=' + k;
+     $('kLink').style.display = 'block';
+   } catch (eL) {}
+ }
+ function hienMan() {
+   var daGhep = !!(luu('biMatCheckin') && luu('emailCheckin'));
+   $('kGhep').style.display = daGhep ? 'none' : 'block';
+   $('kCheckin').style.display = daGhep ? 'block' : 'none';
+ }
+ function hoiViTri() { return $('loai').value === 'GẶP ĐẠI LÝ'; }
+ function chonViTri() {
+   $('kViTriKhac').style.display = (hoiViTri() && $('viTri').value === 'KHÁC') ? 'block' : 'none';
+ }
+ function chonLoai() {
+   var nb = $('loai').value === 'VIỆC NỘI BỘ';
+   $('kViec').style.display = nb ? 'block' : 'none';
+   $('kSdt').style.display = nb ? 'none' : 'block';
+   $('kTen').style.display = nb ? 'none' : 'block';
+   $('kViTri').style.display = hoiViTri() ? 'block' : 'none';
+   chonViTri();
+ }
+ if (!/iPhone|iPad|iPod|Android/i.test(ua)) chan('Trang check-in chỉ mở trên điện thoại (iPhone hoặc Android).');
+ else if (luu('kiemTra', '1') === null) chan('Trình duyệt không lưu được thông tin ghép máy. Tắt chế độ ẩn danh / duyệt riêng tư rồi mở lại trang.');
+ else {
+   if (KHOI) {                                                        // mở bằng link riêng: link là gốc, ghi đè bộ nhớ cũ
+     try {
+       var o = JSON.parse(decodeURIComponent(escape(atob(KHOI.replace(/-/g, '+').replace(/_/g, '/')))));
+       if (o && /^[^@\s]+@[^@\s]+$/.test(o.e) && /^IP-[0-9a-f]{32}$/.test(o.m) && /^[0-9a-f]{64}$/.test(o.b)) {
+         luu('emailCheckin', o.e); luu('maMayCheckin', o.m); luu('biMatCheckin', o.b); luu('tenCheckin', o.t || '');
+       }
+     } catch (eK) {}
+   }
+   VIEC.forEach(function (v) { var o2 = document.createElement('option'); o2.textContent = v; $('viec').appendChild(o2); });
+   $('gEmail').value = luu('emailCheckin');
+   $('loai').onchange = chonLoai; $('viTri').onchange = chonViTri; chonLoai(); hienMan();
+ }
+ var anhImg = null, gioExif = '', vanTay = '', lanChup = 0, urlCu = '', anhCu = 0;
+ $('nutGhep').onclick = function () {
+   var nut = this, email = $('gEmail').value.trim().toLowerCase(), ma = $('gMa').value.trim().toUpperCase();
+   if (!email || !ma) { bao('Nhập Gmail và mã ghép máy.', 'loi'); return; }
+   nut.disabled = true; bao('Đang ghép máy...');
+   var mm = maMay();
+   if (!mm) { nut.disabled = false; bao('Trình duyệt không lưu được thông tin ghép máy. Tắt chế độ ẩn danh / duyệt riêng tư rồi mở lại trang.', 'loi'); return; }
+   goi('ghepMay', { email: email, maMay: mm, maGhep: ma, ua: ua, dauVet: dauVet() }, function (r) {
+     nut.disabled = false;
+     if (!r.ok) { bao(r.loi || LOI_TAM, 'loi'); return; }
+     luu('emailCheckin', email); luu('biMatCheckin', r.biMat); luu('tenCheckin', r.ten || '');
+     $('gMa').value = '';
+     bao('Đã ghép máy cho ' + (r.ten || email) + '. Bây giờ check-in được.', 'ok');
+     hienMan();
+     hienLinkRieng();
+   });
+ };
+ var hoiGhepLai = 0;
+ $('nutGhepLai').onclick = function () {
+   if (Date.now() - hoiGhepLai > 10000) { hoiGhepLai = Date.now(); bao('Ghép lại sẽ cần quản lý cấp mã mới. Chắc chắn thì bấm "Ghép lại máy này" thêm 1 lần nữa.', 'loi'); return; }
+   hoiGhepLai = 0; luu('biMatCheckin', null); $('kq').style.display = 'none'; hienMan();
+ };
+ /** Giờ chụp ghi trong ảnh (EXIF DateTimeOriginal, theo giờ của máy) -> mốc ms. Không có -> ''. */
+ function docGioExif(ab) {
+   try {
+     var v = new DataView(ab), n = v.byteLength, p = 2;
+     if (n < 4 || v.getUint16(0) !== 0xFFD8) return '';
+     while (p + 10 < n) {
+       var mk = v.getUint16(p), dai = v.getUint16(p + 2);
+       if ((mk & 0xFF00) !== 0xFF00 || mk === 0xFFDA) break;
+       if (mk === 0xFFE1 && v.getUint32(p + 4) === 0x45786966) {
+         var t = p + 10, le = v.getUint16(t) === 0x4949;
+         var u16 = function (o) { return v.getUint16(t + o, le); }, u32 = function (o) { return v.getUint32(t + o, le); };
+         var tim = function (ifd, the) { var c = u16(ifd); for (var i = 0; i < c && i < 500; i++) { var e = ifd + 2 + i * 12; if (u16(e) === the) return e; } return 0; };
+         var doc19 = function (o) { var s = ''; for (var i = 0; i < 19; i++) s += String.fromCharCode(v.getUint8(t + o + i)); return s; };
+         var ifd0 = u32(4), s = '', e = tim(ifd0, 0x8769);
+         if (e) { var d = tim(u32(e + 8), 0x9003); if (d) s = doc19(u32(d + 8)); }
+         if (!s) { var d0 = tim(ifd0, 0x0132); if (d0) s = doc19(u32(d0 + 8)); }
+         var m = s.match(/^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/);
+         if (!m) return '';
+         return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
+       }
+       p += 2 + dai;
+     }
+   } catch (e) {}
+   return '';
+ }
+ function hai(x) { return ('0' + x).slice(-2); }
+ function gioChu(d) { return hai(d.getHours()) + ':' + hai(d.getMinutes()) + ' ' + hai(d.getDate()) + '/' + hai(d.getMonth() + 1) + '/' + d.getFullYear(); }
+ /** Thu nhỏ ảnh + đóng dấu (tên NV, giờ, toạ độ, khách, mã) ở dải dưới ảnh. */
+ function veAnh(pos, ma, khach) {
+   var MAX = 1600, w = anhImg.naturalWidth, h = anhImg.naturalHeight, k = Math.min(1, MAX / Math.max(w, h));
+   var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+   var g = c.getContext('2d');
+   g.drawImage(anhImg, 0, 0, c.width, c.height);
+   if (g.fillText) {
+     var dong = ['CHECK-IN · ' + (luu('tenCheckin') || luu('emailCheckin')), 'Giờ: ' + gioChu(new Date()),
+       'Toạ độ: ' + pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6) + ' (±' + Math.round(pos.coords.accuracy || 0) + 'm)',
+       khach, 'Mã: ' + ma];
+     var co = Math.max(16, Math.round(c.width / 42)), cao = Math.round(co * 1.35 * dong.length + co * 0.8);
+     g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(0, c.height - cao, c.width, cao);
+     g.fillStyle = '#ffffff'; g.font = 'bold ' + co + 'px -apple-system, sans-serif';
+     dong.forEach(function (t, i) { g.fillText(t, Math.round(co * 0.6), c.height - cao + Math.round(co * 1.25 + i * co * 1.35)); });
+   }
+   return c.toDataURL('image/jpeg', 0.72).split(',')[1];
+ }
+ // 16/10: CAMERA TRỰC TIẾP — không có ô chọn tệp, không chọn được ảnh thư viện / ảnh chụp màn hình.
+ var luong = null;
+ function tatCam() { try { if (luong) luong.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} luong = null; $('khungCam').style.display = 'none'; }
+ $('nutChup').onclick = function () {
+   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { bao('Trình duyệt này không mở được camera. Cập nhật iOS, rồi mở link bằng Safari hoặc Chrome.', 'loi'); return; }
+   var nut = this; nut.disabled = true; $('kq').style.display = 'none';
+   navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false })
+     .then(function (s) {
+       luong = s; var v = $('cam'); v.srcObject = s; try { v.play(); } catch (e) {}
+       $('khungCam').style.display = 'block'; nut.disabled = false;
+       try { $('khungCam').scrollIntoView({ block: 'center' }); } catch (e2) {}
+     }, function (err) {
+       nut.disabled = false;
+       bao(err && err.name === 'NotAllowedError'
+         ? 'Máy đang chặn Camera. iPhone: Cài đặt → Safari (hoặc Chrome) → Camera → Cho phép, rồi tải lại trang. Android: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Quyền → Camera → Cho phép.'
+         : 'Không mở được camera (' + ((err && err.name) || 'lỗi') + '). Đóng các app đang dùng camera rồi tải lại trang.', 'loi');
+     });
+ };
+ $('nutHuyCam').onclick = tatCam;
+ $('nutBam').onclick = function () {
+   var v = $('cam');
+   if (!v.videoWidth) { bao('Camera chưa sẵn sàng, chờ 1 giây rồi bấm CHỤP lại.', 'loi'); return; }
+   var c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+   c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+   tatCam();
+   var img = new Image(), lan = ++lanChup;
+   img.onload = function () {
+     if (lan !== lanChup) return;
+     anhImg = img; gioExif = ''; vanTay = '';
+     $('xem').src = img.src; $('xem').style.display = 'block';
+     $('nutChup').textContent = '📷 Đã chụp — bấm để chụp lại';
+     $('nutGui').disabled = false; $('kq').style.display = 'none'; dlCho = null;
+   };
+   img.src = c.toDataURL('image/jpeg', 0.9);
+ };
+ $('nutGui').onclick = function () {
+   var nut = this, loai = $('loai').value, nb = loai === 'VIỆC NỘI BỘ';
+   if (dlCho) { nut.disabled = true; bao('Đang gửi lại đúng ảnh vừa rồi...'); guiPhieu(nut, 1); return; }   // 16/10: chưa rõ đã lưu -> gửi lại CÙNG mã, không tạo lượt mới
+   if (!anhImg) { bao('Chụp ảnh tại chỗ trước.', 'loi'); return; }
+   if (!nb && !$('ten').value.trim()) { bao('Nhập tên khách / công trình để nhớ check-in này ở đâu.', 'loi'); return; }
+   if (hoiViTri() && !$('viTri').value) { bao('Chọn nơi gặp: TẠI NHÀ / CỬA HÀNG KHÁCH hoặc VỊ TRÍ KHÁC.', 'loi'); return; }
+   if (!navigator.geolocation) { bao('Máy không cho lấy vị trí.', 'loi'); return; }
+   nut.disabled = true; bao('Đang lấy vị trí...');
+   layViTri(function (pos) {
+     bao('Đang gửi...');
+     goi('layMaNgauNhien', goc(), function (rm) {
+       if (!rm.ok) {
+         nut.disabled = false; bao(rm.loi || LOI_TAM, 'loi');
+         if (rm.ma === 'MAY_SAI' || rm.ma === 'MAY_CHAN') { luu('biMatCheckin', null); hienMan(); }
+         return;
+       }
+       var dl = goc();
+       dl.sdtKhach = nb ? '' : $('sdt').value;
+       dl.tenKhach = nb ? $('viec').value : $('ten').value;
+       dl.lat = pos.coords.latitude; dl.lng = pos.coords.longitude; dl.accuracy = pos.coords.accuracy; dl.gioMay = Date.now();
+       dl.maNgauNhien = rm.ma; dl.loai = loai; dl.gioExif = gioExif;
+       if (nb) { dl.viTri = ''; dl.viTriGhiChu = ''; }
+       else if (!hoiViTri()) { dl.viTri = 'KHÁC'; dl.viTriGhiChu = 'CÔNG TRÌNH'; }
+       else { dl.viTri = $('viTri').value; dl.viTriGhiChu = dl.viTri === 'KHÁC' ? $('viTriGhiChu').value : ''; }
+       dl.vanTayAnh = vanTay;
+       try { dl.anh = veAnh(pos, rm.ma, nb ? dl.tenKhach : (dl.tenKhach + (dl.sdtKhach ? ' · ' + dl.sdtKhach : ''))); }
+       catch (e5) { nut.disabled = false; bao('Máy không xử lý được ảnh. Đóng bớt ứng dụng khác rồi chụp lại.', 'loi'); return; }
+       dlCho = dl; guiPhieu(nut, 1);
+     });
+   }, function (err) {
+     nut.disabled = false;
+     if (err && err.code === 1) bao(/Android/i.test(ua) ? 'Máy đang chặn vị trí. Vào Cài đặt → Vị trí: BẬT; rồi Cài đặt → Ứng dụng → Chrome (và AppSheet) → Quyền → Vị trí: "Chỉ cho phép khi đang dùng". Rồi bấm Gửi lại.' : 'Máy đang chặn vị trí. Vào Cài đặt → Quyền riêng tư → Dịch vụ định vị: bật Định vị, mục Trang web Safari (và AppSheet) chọn "Khi dùng ứng dụng". Rồi bấm Gửi lại.', 'loi');
+     else bao('Chưa bắt được vị trí. Kiểm tra Định vị đang bật, ra chỗ thoáng, chờ vài giây rồi bấm Gửi lại.', 'loi');
+   });
+ };
+ /** Lấy vị trí: lần 1 chính xác cao; hỏng vì sóng yếu / quá giờ thì thử lần 2 chế độ thường. Bị chặn quyền thì báo ngay. */
+ function layViTri(ok, hong) {
+   navigator.geolocation.getCurrentPosition(ok, function (e1) {
+     if (e1 && e1.code === 1) { hong(e1); return; }
+     bao('Đang thử lấy vị trí lần 2...');
+     navigator.geolocation.getCurrentPosition(ok, hong, { enableHighAccuracy: false, timeout: 20000, maximumAge: 10000 });
+   }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+ }
+</script>
+</body></html>
