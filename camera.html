@@ -31,8 +31,8 @@
  <div class="the" id="kCheckin" style="display:none">
   <h1>APEC · Check-in tại chỗ</h1>
   <div class="nho">Chụp ảnh mới bằng camera tại nơi gặp khách (mặt tiền, biển hiệu — không chụp mặt người). Ảnh tự đóng dấu giờ và vị trí. Báo cáo chi tiết nhập trong 48 giờ.</div>
-  <label for="loai">Loại</label>
-  <select id="loai"><option>GẶP ĐẠI LÝ</option><option>CÔNG TRÌNH</option><option>VIỆC NỘI BỘ</option></select>
+  <label for="loai" style="display:none">Loại</label>
+  <select id="loai" style="display:none"><option>GẶP ĐẠI LÝ</option><option>CÔNG TRÌNH</option><option>VIỆC NỘI BỘ</option></select>
   <div id="kSdt"><label for="sdt">SĐT khách (không bắt buộc — nhập ở báo cáo)</label><input id="sdt" type="tel" inputmode="numeric"></div>
   <div id="kTen"><label for="ten">Tên khách / công trình</label><input id="ten"></div>
   <div id="kViec" style="display:none"><label for="viec">Việc nội bộ</label><select id="viec"></select></div>
@@ -140,7 +140,7 @@
  function chonLoai() {
    var nb = $('loai').value === 'VIỆC NỘI BỘ';
    $('kViec').style.display = nb ? 'block' : 'none';
-   $('kSdt').style.display = nb ? 'none' : 'block';
+   $('kSdt').style.display = 'none';                                 // 22/10 Chị chốt: check-in chỉ cần tên
    $('kTen').style.display = nb ? 'none' : 'block';
    $('kViTri').style.display = hoiViTri() ? 'block' : 'none';
    chonViTri();
