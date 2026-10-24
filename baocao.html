@@ -90,18 +90,21 @@
    if (!d || !d.ok) { $('tb').innerHTML = '<span class="loi">' + esc((d && d.loi) || 'Lỗi tạm thời, bấm ↻ thử lại.') + '</span>'; return; }
    $('tenNV').textContent = d.ten;
    var ds = d.ds || [];
-   if (!ds.length) { $('tb').innerHTML = 'Ngày <b>' + dd(ngay) + '</b> chưa có báo cáo nào. Làm báo cáo trên app xong rồi bấm ↻.'; return; }
+   var dem = d.dem || null;                                         // 23/10: dòng đối chiếu check-in ↔ báo cáo
+   var doiChieu = dem ? 'Check-in: ' + dem.ck + ' · Báo cáo: ' + ds.length + (dem.chuaBC ? ' · CHƯA BÁO CÁO: ' + dem.chuaBC : ' · đủ') : '';
+   if (!ds.length) { $('tb').innerHTML = 'Ngày <b>' + dd(ngay) + '</b> chưa có báo cáo nào' + (dem && dem.ck ? ' (đã check-in <b>' + dem.ck + '</b> lượt)' : '') + '. Làm báo cáo trên app xong rồi bấm ↻.'; return; }
    var the_ = ds.map(function (o, i) { return the(o, i + 1); });
    var trong = the_.reduce(function (s, x) { return s + x.trong; }, 0), soAnh = Math.ceil(ds.length / MOI_ANH);
    var khuon = '';
    for (var p = 0; p < soAnh; p++) {
      khuon += '<div class="anh" id="anh' + p + '"><div class="top"><h2>BÁO CÁO NGÀY ' + dd(ngay) + ' · ' + esc(d.ten).toUpperCase() + '</h2>' +
+       (doiChieu ? '<div class="' + (dem.chuaBC ? 'trd' : '') + '"><b>' + doiChieu + '</b></div>' : '') +
        '<div>' + CTY + ' · ' + ds.length + ' lượt ghé · ' + trong + ' ô bỏ trống · Ảnh ' + (p + 1) + '/' + soAnh + '</div></div>' +
        the_.slice(p * MOI_ANH, (p + 1) * MOI_ANH).map(function (x) { return x.html; }).join('') +
        '<div class="chan">Xuất từ app báo cáo lúc ' + new Date().toLocaleString('vi-VN') + '</div></div>';
    }
    $('khuon').innerHTML = khuon;
-   $('tb').innerHTML = '<b>' + ds.length + ' khách</b> · ' + soAnh + ' ảnh' + (trong ? ' · <span class="loi">' + trong + ' ô bỏ trống</span>' : ' · đủ hết các ô') + '. Đang dựng ảnh…';
+   $('tb').innerHTML = (doiChieu ? '<div' + (dem.chuaBC ? ' class="loi"' : '') + '>' + doiChieu + '</div>' : '') + '<b>' + ds.length + ' khách</b> · ' + soAnh + ' ảnh' + (trong ? ' · <span class="loi">' + trong + ' ô bỏ trống</span>' : ' · đủ hết các ô') + '. Đang dựng ảnh…';
    dungAnh(0, soAnh, ngay, DANG);
  }
 
